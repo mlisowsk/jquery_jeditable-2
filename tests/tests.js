@@ -51,32 +51,33 @@ QUnit.test('Enable/disable/destroy', function (assert) {
     assert.equal($elem.find("input[type=text]").length, 0, "Destroy removes INPUT field");
 });
 
-QUnit.test('Event handlers', function (assert) {
-
+QUnit.test('Event handlers', async function (assert) {
+    const done = assert.async();
     var handlers = $elem.getTrackedEvents();
+
     console.log("before editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
     assert.equal($elem.getTrackedEvents().length, 0, "No event handlers prior to first call");
-    $elem.text("testtext").editable({ type: "text" });
+    $elem.text("testtext").editable({ 
+        type: "text", 
+        submit: "OK",
+        onblur: "cancel"
+        });
     assert.equal($elem.getTrackedEvents().length, 2, "Two event handlers after initialization");
     console.log("aft .editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
-    //$elem.editable('disable');
-    //assert.strictEqual($elem.data('disabled.editable'), true, "Disabled state ok");
 
-    // $elem.editable('enable');
-    // assert.ok($elem.data('event.editable'), "Enabled after disabled");
-
-    //console.log("bef next handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
-
-    //$elem.off(".editable");
-
-    //$elem.editable();
-    $elem.click();
-    assert.equal($elem.getTrackedEvents().length, 2, "Two event handlers after click");
+    $elem.click();  // activate editable
+    assert.equal($elem.getTrackedEvents().length, 3, "3 event handlers after click");
     console.log("aft .click()) handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
 
-    $elem.editable('destroy');
-    assert.equal($elem.getTrackedEvents().length, 0, "No event handlers after call to 'destroy'");
-    console.log("aft destroy editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+    $elem.find("input").val("inputtext");
+    $elem.find("button").click();   // submit with OK button
+
+    setTimeout(function () {
+        $elem.editable('destroy');
+        assert.equal($elem.getTrackedEvents().length, 0, "No event handlers after call to 'destroy'");
+        console.log("aft destroy editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+        done();
+    }, 400);
 });
 
 QUnit.module('Text Field', {

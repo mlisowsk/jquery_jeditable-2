@@ -308,7 +308,7 @@
                 }
 
                 /* discard changes if pressing esc */
-                $(this).on('keydown', function(e) {
+                $(this).on('keydown.editable', function(e) {
                     if (e.which === 27) {
                         e.preventDefault();
                         reset.apply(form, [settings, self]);
@@ -322,21 +322,21 @@
                 /* Discard, submit or nothing with changes when clicking outside. */
                 /* Do nothing is usable when navigating with tab. */
                 if ('cancel' === settings.onblur) {
-                    input.on('blur', function(e) {
+                    input.on('blur.editable', function(e) {
                         /* Prevent canceling if submit was clicked. */
                         t = self.setTimeout(function() {
                             reset.apply(form, [settings, self]);
                         }, 500);
                     });
                 } else if ('submit' === settings.onblur) {
-                    input.on('blur', function(e) {
+                    input.on('blur.editable', function(e) {
                         /* Prevent double submit if submit was clicked. */
                         t = self.setTimeout(function() {
                             form.trigger('submit');
                         }, 200);
                     });
                 } else if (typeof settings.onblur === 'function') {
-                    input.on('blur', function(e) {
+                    input.on('blur.editable', function(e) {
                         // reset the form if the onblur function returns false
                         if (false === settings.onblur.apply(self, [input.val(), settings, form])) {
                             reset.apply(form, [settings, self]);
@@ -358,7 +358,7 @@
                     }
 
                     if (t) {
-                        self.clearTimeout(t);
+                        self.clearTimeout(t);   // stop blur events preventing a submit
                     }
 
                     /* Call before submit hook. */
@@ -456,12 +456,13 @@
 
             // PRIVILEGED METHODS
 
-            // RESET
+            // RESET - if in editing mode, revert text and exit editing mode
             self.reset = function(form) {
                 /* Prevent calling reset twice when blurring. */
                 if (self.editing) {
                     /* Before reset hook, if it returns false abort resetting. */
                     if (false !== onreset.apply(form, [settings, self])) {
+                        $(self).find("input,form").off(".editable");
                         $(self).text(self.revert);
                         self.editing   = false;
                         if (!$(self).html().trim()) {

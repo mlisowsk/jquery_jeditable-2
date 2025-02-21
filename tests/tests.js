@@ -52,13 +52,61 @@ QUnit.test('Enable/disable/destroy', function (assert) {
 });
 
 QUnit.test('Event handlers', async function (assert) {
-    const done = assert.async();
+    const done1 = assert.async();
+    const done2 = assert.async();
     var handlers = $elem.getTrackedEvents();
 
     console.log("before editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
     assert.equal($elem.getTrackedEvents().length, 0, "No event handlers prior to first call");
-    $elem.text("testtext").editable({ 
-        type: "text", 
+    $elem.text("initialtext").editable(
+        function (newValue, settings) {
+            //assert.step("SUBMIT " + newValue);
+            console.log("SUBMIT");
+            done1();
+            return newValue;  // return text value to commit value to HTML
+        }, {
+        type: "text",
+        submit: "OK",
+        onblur: "submit"
+        });
+    assert.equal($elem.getTrackedEvents().length, 2, "Two event handlers after initialization");
+    console.log("aft .editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+
+    $elem.click();  // activate editable
+    setTimeout(function () {
+        //assert.equal($elem.getTrackedEvents().length, 3, "3 event handlers after click");
+        console.log("aft .click()) handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+
+        $elem.find("input").val("newtext");
+        assert.equal($elem.find("button").length, 1, "One OK button");
+        $elem.find("button").click();   // submit with OK button
+
+        setTimeout(function () {
+            $elem.editable('destroy');
+            assert.equal($elem.getTrackedEvents().length, 0, "No event handlers after call to 'destroy'");
+            console.log("aft destroy editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+            done2();
+        }, 400);
+    }, 400);
+});
+
+QUnit.test('Event handlers losing focus', async function (assert) {
+    const done1 = assert.async();
+    const done2 = assert.async();
+    var handlers = $elem.getTrackedEvents();
+
+    var $other = $elem.parent().append("<div id='other' tabindex='1' style='width: 200px; height: 50px;'>Other content</div>");
+    console.log("before editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+    assert.equal($other.length, 1, "Other element exists");
+    assert.equal($elem.getTrackedEvents().length, 0, "No event handlers prior to first call");
+    $elem.text("initialtext").editable(
+        function (newValue, settings) {
+            //assert.step("SUBMIT " + newValue);
+            console.log("SUBMIT callback newValue="+newValue);
+            done1();
+            return newValue;  // return text value to commit value to HTML
+        }, {
+        type: "text",
         submit: "OK",
         onblur: "cancel"
         });
@@ -66,17 +114,24 @@ QUnit.test('Event handlers', async function (assert) {
     console.log("aft .editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
 
     $elem.click();  // activate editable
-    assert.equal($elem.getTrackedEvents().length, 3, "3 event handlers after click");
-    console.log("aft .click()) handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
-
-    $elem.find("input").val("inputtext");
-    $elem.find("button").click();   // submit with OK button
-
     setTimeout(function () {
-        $elem.editable('destroy');
-        assert.equal($elem.getTrackedEvents().length, 0, "No event handlers after call to 'destroy'");
-        console.log("aft destroy editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
-        done();
+        //assert.equal($elem.getTrackedEvents().length, 3, "3 event handlers after click");
+        console.log("aft activate .click()) handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+
+        $elem.find("input").val("newtext");
+        //assert.equal($other.lengt.find("button").length, 1, "One OK button");
+        //$other.click(); // click on other element, losing focus on editable
+        $elem.find("input").trigger("blur.editable");
+
+        setTimeout(function () {
+            assert.equal($elem.getTrackedEvents().length, 2, "2 event handlers after blur");
+            console.log("aft blur .click()) handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+            //debugger;
+            $elem.editable('destroy');
+            assert.equal($elem.getTrackedEvents().length, 0, "No event handlers after call to 'destroy'");
+            console.log("aft destroy editable() handlers.len=" + $elem.getTrackedEvents().length, $elem.getTrackedEvents());
+            done2();
+        }, 1000);
     }, 400);
 });
 

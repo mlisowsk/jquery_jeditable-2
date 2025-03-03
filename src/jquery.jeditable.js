@@ -91,6 +91,7 @@
         if ('destroy' === target) {
             $(this)
                 .off($(this).data('event.editable'))
+                .off('.editablekey')
                 .removeData('disabled.editable')
                 .removeData('event.editable');
             return;
@@ -308,14 +309,16 @@
                 }
 
                 /* discard changes if pressing esc */
-                $(this).on('keydown.editable', function(e) {
+                $(this).on('keydown.editablekey', function(e) {
                     if (e.which === 27) {
                         e.preventDefault();
                         reset.apply(form, [settings, self]);
+                        $(this).off(e);
                     /* allow shift+enter to submit form (required for textarea) */
                     } else if (e.which == 13 && e.shiftKey){
                         e.preventDefault();
                         form.trigger('submit');
+                        $(this).off(e);
                     }
                 });
 
@@ -376,6 +379,8 @@
                               var responseHandler = function(value, complete) {
                                   isSubmitting = false;
                                   if (false !== complete) {
+                                      $(self).find('input,form').off('.editable');
+                                      $(self).off('.editablekey');
                                       $(self).html(value);
                                       self.editing = false;
                                       callback.apply(self, [self.innerText, settings]);
@@ -445,7 +450,8 @@
                             }
                         }
                     }
-
+                    $(self).find('input,form').off('.editable');
+                    $(self).off('.editablekey');
                     /* Show tooltip again. */
                     if (settings.tooltip) {
                       $(self).attr('title', settings.tooltip);
@@ -463,6 +469,7 @@
                     /* Before reset hook, if it returns false abort resetting. */
                     if (false !== onreset.apply(form, [settings, self])) {
                         $(self).find("input,form").off(".editable");
+                        $(self).off('.editablekey');
                         $(self).text(self.revert);
                         self.editing   = false;
                         if (!$(self).html().trim()) {
@@ -480,6 +487,7 @@
             self.destroy = function(form) {
                 $(self)
                 .off($(self).data('event.editable'))
+                .off('.editablekey')
                 .removeData('disabled.editable')
                 .removeData('event.editable');
 

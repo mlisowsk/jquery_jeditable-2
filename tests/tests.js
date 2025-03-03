@@ -121,7 +121,7 @@ QUnit.test('Event handlers losing focus', async function (assert) {
         $elem.find("input").val("newtext");
         //assert.equal($other.lengt.find("button").length, 1, "One OK button");
         //$other.click(); // click on other element, losing focus on editable
-        $elem.find("input").trigger("blur.editable");
+        $elem.find("input").trigger("blur");
 
         setTimeout(function () {
             assert.equal($elem.getTrackedEvents().length, 2, "2 event handlers after blur");
